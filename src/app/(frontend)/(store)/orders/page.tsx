@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { Package, CheckCircle, Truck, Clock } from 'lucide-react'
-import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
+import { local } from '@/data-access/local'
 
 export const metadata: Metadata = {
   title: 'My Orders - E-Commerce Demo',
@@ -13,23 +13,12 @@ export const metadata: Metadata = {
 
 export default async function OrdersPage() {
   const user = await getCurrentUser()
-  
+
   if (!user) {
     redirect('/auth')
   }
 
-  const payload = await getPayloadClient()
-
-  // Get user's orders
-  const orders = await payload.find({
-    collection: 'orders',
-    where: {
-      user: { equals: user.id },
-    },
-    depth: 2, // Populate items.product and user
-    sort: '-createdAt',
-    limit: 50,
-  })
+  const orders = await local.order.findWhere({ user: { equals: user.id } })
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -69,7 +58,7 @@ export default async function OrdersPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Your Orders</h1>
-        
+
         <div className="text-center py-12">
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-4">No orders yet</h2>
@@ -103,13 +92,13 @@ export default async function OrdersPage() {
                 </p>
               </div>
               <div className="text-right">
-                <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}>
+                <div
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(order.status)}`}
+                >
                   {getStatusIcon(order.status)}
                   <span className="ml-2 capitalize">{order.status}</span>
                 </div>
-                <p className="text-lg font-bold text-green-600 mt-1">
-                  {formatPrice(order.total)}
-                </p>
+                <p className="text-lg font-bold text-green-600 mt-1">{formatPrice(order.total)}</p>
               </div>
             </div>
 
@@ -117,7 +106,7 @@ export default async function OrdersPage() {
             <div className="space-y-3 mb-4">
               {order.items.slice(0, 3).map((item: any, index: number) => {
                 const product = typeof item.product === 'object' ? item.product : null
-                
+
                 if (!product) return null
 
                 return (
@@ -129,14 +118,12 @@ export default async function OrdersPage() {
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                      <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
                     </div>
                   </div>
                 )
               })}
-              
+
               {order.items.length > 3 && (
                 <p className="text-sm text-gray-600">
                   +{order.items.length - 3} more item{order.items.length - 3 > 1 ? 's' : ''}
@@ -170,9 +157,7 @@ export default async function OrdersPage() {
         <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {orders.docs.length}
-            </div>
+            <div className="text-2xl font-bold text-blue-600">{orders.docs.length}</div>
             <div className="text-sm text-gray-600">Total Orders</div>
           </div>
           <div className="text-center">
@@ -183,13 +168,17 @@ export default async function OrdersPage() {
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {orders.docs.filter(order => order.status === 'delivered').length}
+              {orders.docs.filter((order) => order.status === 'delivered').length}
             </div>
             <div className="text-sm text-gray-600">Delivered</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
-              {orders.docs.filter(order => ['pending', 'processing', 'shipped'].includes(order.status)).length}
+              {
+                orders.docs.filter((order) =>
+                  ['pending', 'processing', 'shipped'].includes(order.status),
+                ).length
+              }
             </div>
             <div className="text-sm text-gray-600">In Progress</div>
           </div>
