@@ -1,10 +1,9 @@
-import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import { formatPrice } from '@/lib/utils'
 import { local } from '@/data-access/local'
 import { Product } from '@/payload-types'
 import { ProductCard } from '@/components/ProductCard'
+import { getPayloadClient } from '@/db/client'
+import { notFound } from 'next/navigation'
 
 interface CategoryPageProps {
   params: {
@@ -16,7 +15,16 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
   const { slug } = await params
 
   try {
-    const category = await local.category.findBy('slug', slug)
+    const payload = await getPayloadClient()
+
+    // Get the category details
+    const result = await payload.find({
+      collection: 'categories',
+      where: { slug: { equals: slug } },
+      limit: 1,
+    })
+
+    const category = result.docs[0]
 
     if (!category) {
       return {
@@ -40,8 +48,20 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
 export default async function CategoryPage({ params }: CategoryPageProps) {
   const { slug } = await params
 
+  const payload = await getPayloadClient()
+
   // Get the category details
-  const category = await local.category.findBy('slug', slug)
+  const result = await payload.find({
+    collection: 'categories',
+    where: { slug: { equals: slug } },
+    limit: 1,
+  })
+
+  if (result.totalDocs === 0) {
+    notFound()
+  }
+
+  const category = result.docs[0]
 
   // Get products in this category
   const products = (category?.products?.docs as Product[]) ?? []
