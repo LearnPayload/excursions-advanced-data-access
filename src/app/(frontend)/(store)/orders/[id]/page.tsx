@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { CheckCircle, Package, Truck } from 'lucide-react'
-import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
+import { local } from '@/data-access/local'
 
 interface OrderPageProps {
   params: Promise<{ id: string }>
@@ -12,7 +12,7 @@ interface OrderPageProps {
 
 export async function generateMetadata({ params }: OrderPageProps): Promise<Metadata> {
   const { id } = await params
-  
+
   return {
     title: `Order #${id} - E-Commerce Demo`,
     description: `View details and track the status of your order #${id}.`,
@@ -22,28 +22,15 @@ export async function generateMetadata({ params }: OrderPageProps): Promise<Meta
 export default async function OrderPage({ params }: OrderPageProps) {
   const { id } = await params
   const user = await getCurrentUser()
-  
+
   if (!user) {
     redirect('/auth')
   }
 
-  const payload = await getPayloadClient()
-
-  // Get the order
-  let order
-  try {
-    order = await payload.findByID({
-      collection: 'orders',
-      id: Number(id),
-      depth: 2, // Populate items.product and user
-    })
-  } catch (error) {
-    notFound()
-  }
-
-  if (!order) {
-    notFound()
-  }
+  const order = await local.order.findFirstOrFail({
+    id: { equals: Number(id) },
+    user: { equals: user.id },
+  })
 
   // Verify the order belongs to the current user
   const orderUserId = typeof order.user === 'object' ? order.user.id : order.user
@@ -54,7 +41,9 @@ export default async function OrderPage({ params }: OrderPageProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <div className="w-6 h-6 border-2 border-yellow-500 rounded-full animate-spin border-t-transparent" />
+        return (
+          <div className="w-6 h-6 border-2 border-yellow-500 rounded-full animate-spin border-t-transparent" />
+        )
       case 'processing':
         return <Package className="w-6 h-6 text-blue-600" />
       case 'shipped':
@@ -104,7 +93,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
               <span className="font-medium capitalize">{getStatusText(order.status)}</span>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
             <div>
               <span className="font-medium">Order Date:</span>
@@ -120,15 +109,18 @@ export default async function OrderPage({ params }: OrderPageProps) {
         {/* Order Items */}
         <div className="bg-white border rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Order Items</h2>
-          
+
           <div className="space-y-4">
             {order.items.map((item: any, index: number) => {
               const product = typeof item.product === 'object' ? item.product : null
-              
+
               if (!product) return null
 
               return (
-                <div key={index} className="flex items-center space-x-4 py-4 border-b last:border-b-0">
+                <div
+                  key={index}
+                  className="flex items-center space-x-4 py-4 border-b last:border-b-0"
+                >
                   <div className="flex-1">
                     <h3 className="font-medium">{product.name}</h3>
                     {product.category && typeof product.category === 'object' && (

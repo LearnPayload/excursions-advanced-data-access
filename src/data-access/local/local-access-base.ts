@@ -69,6 +69,22 @@ export abstract class LocalAccessBase<T extends BaseDocument> implements BaseDat
     return result
   }
 
+  async findFirst(where: Where = {}, options: QueryOptions = {}): Promise<T | null> {
+    const result = await this.findWhere(where, options)
+    if (result.docs.length === 0) {
+      return null
+    }
+    return result.docs[0] as unknown as T
+  }
+
+  async findFirstOrFail(where: Where = {}, options: QueryOptions = {}): Promise<T> {
+    const first = await this.findFirst(where, options)
+    if (first === null) {
+      notFound()
+    }
+    return first
+  }
+
   async create(data: Omit<Partial<T>, 'id'>): Promise<T> {
     const payload = await this.getPayload()
     const result = await payload.create({
