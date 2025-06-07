@@ -4,6 +4,7 @@ import { Metadata } from 'next'
 import { formatPrice } from '@/lib/utils'
 import { local } from '@/data-access/local'
 import { Product } from '@/payload-types'
+import { ProductCard } from '@/components/ProductCard'
 
 interface CategoryPageProps {
   params: {
@@ -43,11 +44,17 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   const category = await local.category.findBy('slug', slug)
 
   // Get products in this category
-  const products = category.products
+  const products = (category?.products?.docs as Product[]) ?? []
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <pre>{JSON.stringify(products, null, 2)}</pre>
+      {products.length !== 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {products.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Metadata } from 'next'
 import { local } from '@/data-access/local'
 import { formatPrice } from '@/lib/utils'
+import { ProductCard } from '@/components/ProductCard'
 
 export const metadata: Metadata = {
   title: 'All Products - E-Commerce Demo',
@@ -19,27 +20,7 @@ export default async function ProductsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.docs.map((product) => (
-          <Link
-            key={product.id}
-            href={`/products/${product.slug}`}
-            className="border rounded-lg p-6 hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-xl font-semibold mb-2">{product.name}</h2>
-            <p className="text-gray-600 mb-3 line-clamp-2">{product.description}</p>
-
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-2xl font-bold text-green-600">
-                {formatPrice(product.price)}
-              </span>
-              <span className="text-sm text-gray-500">{product.inventory} in stock</span>
-            </div>
-
-            {product.category && typeof product.category === 'object' && (
-              <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                {product.category.name}
-              </span>
-            )}
-          </Link>
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
 

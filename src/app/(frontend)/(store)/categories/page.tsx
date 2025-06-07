@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 }
 
 export default async function CategoriesPage() {
-  const categories = await local.category.all()
+  const categories = await local.category.findWhere()
 
   return (
     <div className="container mx-auto px-4 py-8">
