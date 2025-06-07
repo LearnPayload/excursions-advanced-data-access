@@ -1,3 +1,5 @@
+![image](https://github.com/user-attachments/assets/fe4501e5-3f67-4b2a-9a81-8c9444ac7efa)
+
 ## Project Overview
 
 This is an **example e-commerce application** built specifically to demonstrate **Advanced Data Access Patterns in Payload CMS** for an educational video series called "Excursions."
