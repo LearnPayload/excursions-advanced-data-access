@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
+import { getPayloadClient } from '@/db/client'
 
 export const metadata: Metadata = {
   title: 'Shop by Category - E-Commerce Demo',
@@ -9,7 +9,11 @@ export const metadata: Metadata = {
 }
 
 export default async function CategoriesPage() {
-  const categories = await local.category.findWhere()
+  const payload = await getPayloadClient()
+
+  const categories = await payload.find({
+    collection: 'categories',
+  })
 
   return (
     <div className="container mx-auto px-4 py-8">
