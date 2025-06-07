@@ -58,7 +58,9 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@tailwindcss/oxide",
-      "sharp"
+      "esbuild",
+      "sharp",
+      "unrs-resolver"
     ]
   }
 }
