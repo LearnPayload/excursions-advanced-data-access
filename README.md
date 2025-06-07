@@ -1,67 +1,188 @@
-# Payload Blank Template
+## Project Overview
 
-This template comes configured with the bare minimum to get started on anything you need.
+This is an **example e-commerce application** built specifically to demonstrate **Advanced Data Access Patterns in Payload CMS** for an educational video series called "Excursions."
 
-## Quick start
+### Purpose
 
-This template can be deployed directly from our Cloud hosting and it will setup MongoDB and cloud S3 object storage for media.
+- **NOT a production e-commerce app** - this is purely educational
+- Demonstrates the progression from scattered Payload queries to clean abstractions
+- Shows when and why to build data access layers over Payload CMS
+- Designed to be standalone content (independent of other video series)
 
-## Quick Start - local setup
+## Architecture Goals
 
-To spin up this template locally, follow these steps:
+### Core Problem Being Solved
 
-### Clone
+Replace scattered Payload boilerplate throughout the codebase:
 
-After you click the `Deploy` button above, you'll want to have standalone copy of this repo on your machine. If you've already cloned this repo, skip to [Development](#development).
+```typescript
+// Instead of this everywhere...
+const payload = await getPayload({ config })
+const products = await payload.find({
+  collection: 'products',
+  where: { category: { equals: 'electronics' } },
+  limit: 20,
+  sort: '-createdAt',
+})
+```
 
-### Development
+### Target API Design
 
-1. First [clone the repo](#clone) if you have not done so already
-2. `cd my-project && cp .env.example .env` to copy the example environment variables. You'll need to add the `MONGODB_URI` from your Cloud project to your `.env` if you want to use S3 storage and the MongoDB database that was created for you.
+Clean, domain-specific interface:
 
-3. `pnpm install && pnpm dev` to install dependencies and start the dev server
-4. open `http://localhost:3000` to open the app in your browser
+```typescript
+// Much cleaner and more intentional
+const products = await model.product.findByCategory('electronics', {
+  limit: 20,
+  sort: '-createdAt',
+})
 
-That's it! Changes made in `./src` will be reflected in your app. Follow the on-screen instructions to login and create your first admin user. Then check out [Production](#production) once you're ready to build and serve your app, and [Deployment](#deployment) when you're ready to go live.
+const cartItems = await model.cart.findAllItems()
+await model.order.create(cartItems)
+```
 
-#### Docker (Optional)
+### Multi-Backend Abstraction
 
-If you prefer to use Docker for local development instead of a local MongoDB instance, the provided docker-compose.yml file can be used.
+Support multiple Payload API approaches in the same app:
 
-To do so, follow these steps:
+```typescript
+// Different backends for different needs
+const product = await local.product.find(123) // Local API - fastest
+const product = await rest.product.find(123) // REST API - for services
+const product = await gql.product.find(123) // GraphQL - for complex queries
+```
 
-- Modify the `MONGODB_URI` in your `.env` file to `mongodb://127.0.0.1/<dbname>`
-- Modify the `docker-compose.yml` file's `MONGODB_URI` to match the above `<dbname>`
-- Run `docker-compose up` to start the database, optionally pass `-d` to run in the background.
+#### Implementation Structure
 
-## How it works
+```typescript
+// Base interface for all backends
+interface BaseInterface {
+  find(id: string): Promise<T>
+  findMany(options: QueryOptions): Promise<T[]>
+  create(data: Input<T>): Promise<T>
+}
 
-The Payload config is tailored specifically to the needs of most websites. It is pre-configured in the following ways:
+// Backend implementations
+LocalBase implements BaseInterface    // Payload local API
+RestBase implements BaseInterface     // Payload REST API
+GraphQLBase implements BaseInterface  // Payload GraphQL API
 
-### Collections
+// Domain models extend appropriate backend
+LocalProduct extends LocalBase {
+  findByCategory(category: string) { /* implementation */ }
+  findInStock() { /* implementation */ }
+}
 
-See the [Collections](https://payloadcms.com/docs/configuration/collections) docs for details on how to extend this functionality.
+RestProduct extends RestBase {
+  findByCategory(category: string) { /* implementation */ }
+  syncWithInventory() { /* REST-specific method */ }
+}
+```
 
-- #### Users (Authentication)
+## Development Approach
 
-  Users are auth-enabled collections that have access to the admin panel.
+### Reference Folder Structure
 
-  For additional help, see the official [Auth Example](https://github.com/payloadcms/payload/tree/main/examples/auth) or the [Authentication](https://payloadcms.com/docs/authentication/overview#authentication-overview) docs.
+```
+├── src
+│   ├── app
+│   │   ├── (frontend)
+│   │   │   ├── (home) // homepage only
+│   │   │   ├── (store) // all other e-commerce related pages/routes
+│   │   └── (payload) // untouched
+│   ├── assets // any images we may need to import
+│   ├── blocks // higher level components that might be used in multiple places
+│   ├── components // shadcn and other atomic global components
+│   ├── config // all payload related configurations
+│   │   ├── collections // where/how collections will be organized
+│   │   │   └── Users
+│   │   │       └── Users.ts
+│   │   ├── env.ts // if any environment variables are needed, they can be mapped and imported from here
+│   │   └── helpers // any functions that serve to help any of the above configurations
+│   ├── db
+│   │   ├── client.ts // payload client (await getPayload(...))
+│   │   ├── seed.ts // any seeders we may want
+│   ├── forms
+│   │   ├── example-form
+│   │   │   ├── schema.ts // zod
+│   │   │   ├── actions.ts // server actions
+│   │   │   └── form.tsx
+│   ├── lib // general utilities
+│   │   └── utils.ts
+```
 
-- #### Media
+### API-First Design
 
-  This is the uploads enabled collection. It features pre-configured sizes, focal point and manual resizing to help you manage your pictures.
+1. **Design the ideal API first** - how do we want to interact with data?
+2. **Work backwards to implement** - build just enough to support that interface
+3. **Focus on developer experience** - prioritize clean, readable code
 
-### Docker
+### Complexity Guidelines
 
-Alternatively, you can use [Docker](https://www.docker.com) to spin up this template locally. To do so, follow these steps:
+- **Keep it simple** - don't over-engineer for this example
+- **Demonstrate clear value** - each abstraction should solve obvious pain points
+- **Avoid feature creep** - stay focused on data access patterns
 
-1. Follow [steps 1 and 2 from above](#development), the docker-compose file will automatically use the `.env` file in your project root
-1. Next run `docker-compose up`
-1. Follow [steps 4 and 5 from above](#development) to login and create your first admin user
+## E-commerce Domain
 
-That's it! The Docker instance will help you get up and running quickly while also standardizing the development environment across your teams.
+### Core Collections
 
-## Questions
+- **Products** - name, description, price, category, inventory
+- **Users** - authentication, profiles, order history
+- **Orders** - order items, status, totals, user relationships
+- **Categories** - product organization
+- **Cart Items** - shopping cart functionality
 
-If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+### Key Features
+
+- Product browsing and search
+- Shopping cart management
+- Order creation and tracking
+- User accounts and order history
+- Basic inventory management
+
+### Common Query Patterns to Abstract
+
+- Find products by category
+- Check inventory status
+- Get user's cart items
+- Find user's order history
+- Calculate order totals
+- Product search and filtering
+
+## Educational Content Structure
+
+### Progression
+
+1. **Show the mess** - direct Payload calls scattered everywhere
+2. **Dream the solution** - design clean API we wish we had
+3. **Implement incrementally** - build abstractions that provide real value
+4. **Demonstrate flexibility** - show multi-backend potential
+
+### Key Teaching Points
+
+- When abstraction adds value vs. when it's overkill
+- API design thinking (consumer experience first)
+- Progressive enhancement of data access patterns
+- Future-proofing through interface design
+
+## Technical Constraints
+
+### What to Implement
+
+- **Local API backend** - main implementation for the lesson
+- **Core domain methods** - findByCategory, create, findMany, etc.
+- **Basic type safety** - TypeScript interfaces and generics
+
+### What to Mention (But Not Implement)
+
+- **REST/GraphQL backends** - explain the potential, show interface
+- **Advanced features** - caching, transactions, complex queries
+- **Testing strategies** - how the abstraction improves testability
+
+## Success Criteria
+
+- Dramatically cleaner application code compared to direct Payload usage
+- Clear demonstration of when/why to build abstractions
+- Reusable patterns that viewers can apply to their own projects
+- Architecture that could realistically scale with growing requirements
