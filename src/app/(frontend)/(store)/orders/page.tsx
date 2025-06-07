@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { Package, CheckCircle, Truck, Clock } from 'lucide-react'
+import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/data-access/local'
 
 export const metadata: Metadata = {
   title: 'My Orders - E-Commerce Demo',
@@ -18,7 +18,18 @@ export default async function OrdersPage() {
     redirect('/auth')
   }
 
-  const orders = await local.order.findWhere({ user: { equals: user.id } })
+  const payload = await getPayloadClient()
+
+  // Get user's orders
+  const orders = await payload.find({
+    collection: 'orders',
+    where: {
+      user: { equals: user.id },
+    },
+    depth: 2, // Populate items.product and user
+    sort: '-createdAt',
+    limit: 50,
+  })
 
   const getStatusIcon = (status: string) => {
     switch (status) {

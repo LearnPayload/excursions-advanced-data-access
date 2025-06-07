@@ -4,14 +4,11 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CreditCard, Shield } from 'lucide-react'
 import { processCheckoutAction } from './actions'
-import { checkoutSchema, type CheckoutFormData } from './schema'
+import { type CheckoutFormData } from './schema'
+import { User } from '@/payload-types'
 
 interface CheckoutFormProps {
-  user: {
-    id: string
-    name: string
-    email: string
-  }
+  user: User
 }
 
 interface FormState {

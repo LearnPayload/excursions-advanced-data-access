@@ -2,9 +2,9 @@ import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { Metadata } from 'next'
 import { CheckCircle, Package, Truck } from 'lucide-react'
+import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/data-access/local'
 
 interface OrderPageProps {
   params: Promise<{ id: string }>
@@ -27,10 +27,23 @@ export default async function OrderPage({ params }: OrderPageProps) {
     redirect('/auth')
   }
 
-  const order = await local.order.findFirstOrFail({
-    id: { equals: Number(id) },
-    user: { equals: user.id },
-  })
+  const payload = await getPayloadClient()
+
+  // Get the order
+  let order
+  try {
+    order = await payload.findByID({
+      collection: 'orders',
+      id: Number(id),
+      depth: 2, // Populate items.product and user
+    })
+  } catch (error) {
+    notFound()
+  }
+
+  if (!order) {
+    notFound()
+  }
 
   // Verify the order belongs to the current user
   const orderUserId = typeof order.user === 'object' ? order.user.id : order.user

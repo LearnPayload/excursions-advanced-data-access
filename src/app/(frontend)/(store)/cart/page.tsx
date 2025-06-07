@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import { requireAuth } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { RemoveFromCartButton } from '@/components/RemoveFromCartButton'
-import { local } from '@/data-access/local'
+import { getPayloadClient } from '@/db/client'
 
 export const metadata: Metadata = {
   title: 'Shopping Cart - E-Commerce Demo',
@@ -13,9 +13,23 @@ export const metadata: Metadata = {
 export default async function CartPage() {
   const user = await requireAuth()
 
-  const cart = await local.cart.getCartByUser(user.id)
+  const payload = await getPayloadClient()
 
-  if (cart.items.length === 0) {
+  const result = await payload.find({
+    collection: 'cart-items',
+    where: { user: { equals: user.id } },
+  })
+
+  const items = result.docs || []
+
+  const total = items.reduce((sum, item) => {
+    if (typeof item.product === 'object' && item.product.price) {
+      return sum + item.product.price * item.quantity
+    }
+    return sum
+  }, 0)
+
+  if (items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
@@ -45,7 +59,7 @@ export default async function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2">
           <div className="space-y-4">
-            {cart.items.map((item) => {
+            {items.map((item) => {
               const product = typeof item.product === 'object' ? item.product : null
 
               if (!product) return null
@@ -93,8 +107,8 @@ export default async function CartPage() {
 
             <div className="space-y-2 mb-4">
               <div className="flex justify-between">
-                <span>Items ({cart.items.length})</span>
-                <span>{formatPrice(cart.total)}</span>
+                <span>Items ({items.length})</span>
+                <span>{formatPrice(total)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Shipping</span>
@@ -103,7 +117,7 @@ export default async function CartPage() {
               <div className="border-t pt-2">
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span className="text-green-600">{formatPrice(cart.total)}</span>
+                  <span className="text-green-600">{formatPrice(total)}</span>
                 </div>
               </div>
             </div>
