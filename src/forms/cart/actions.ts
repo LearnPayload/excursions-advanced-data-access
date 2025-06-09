@@ -1,9 +1,8 @@
 'use server'
 
-import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { addToCartSchema, type AddToCartFormData } from './schema'
-import { local } from '@/data-access/local'
+import { local } from '@/repository/local'
 
 interface ActionResult {
   success: boolean
@@ -26,7 +25,9 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
     const validatedData = addToCartSchema.parse(data)
 
     // Check if product exists and has sufficient inventory
-    const product = await local.product.find(validatedData.productId)
+
+    // Get the category details
+    const product = await local.product.getByID(validatedData.productId)
 
     if (!product) {
       return {
@@ -43,7 +44,13 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
     }
 
     // Check if item already exists in cart for this user
-    const existingCartItem = await local.cart.cartItemExists(user.id, validatedData.productId)
+
+    const items = await local.cart.getAll({
+      user: { equals: user.id },
+      product: { equals: validatedData.productId },
+    })
+
+    const existingCartItem = items.length > 0 ? items[0] : null
 
     if (existingCartItem) {
       // Update existing cart item quantity
@@ -66,9 +73,9 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
       }
     } else {
       await local.cart.create({
-        user: user.id,
         product: Number(validatedData.productId),
         quantity: validatedData.quantity,
+        user: user.id,
       })
 
       return {
@@ -101,13 +108,8 @@ export async function removeFromCartAction(cartItemId: number): Promise<ActionRe
       }
     }
 
-    const payload = await getPayloadClient()
-
     // Verify the cart item belongs to the current user
-    const cartItem = await payload.findByID({
-      collection: 'cart-items',
-      id: cartItemId,
-    })
+    const cartItem = await local.cart.getByID(cartItemId)
 
     if (!cartItem) {
       return {
@@ -125,10 +127,7 @@ export async function removeFromCartAction(cartItemId: number): Promise<ActionRe
       }
     }
 
-    await payload.delete({
-      collection: 'cart-items',
-      id: cartItemId,
-    })
+    await local.cart.delete(cartItemId)
 
     return {
       success: true,

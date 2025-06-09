@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { AddToCartForm } from '@/forms/cart/form'
+import { local } from '@/repository/local'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -12,9 +11,7 @@ interface ProductDetailPageProps {
 
 export async function generateMetadata({ params }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params
-
-  // Clean API call for metadata generation
-  const product = await local.product.findBy('slug', slug)
+  const product = await local.product.getBySlug(slug)
 
   if (!product) {
     return {
@@ -38,12 +35,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const { slug } = await params
   const user = await getCurrentUser()
 
-  // Clean, domain-specific API call
-  const product = await local.product.findBy('slug', slug)
-
-  if (!product) {
-    notFound()
-  }
+  const product = await local.product.getBySlugOrFail(slug)
 
   return (
     <div className="container mx-auto px-4 py-8">

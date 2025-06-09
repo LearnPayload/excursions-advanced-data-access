@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
-import { formatPrice } from '@/lib/utils'
 import { ProductCard } from '@/components/ProductCard'
+import { local } from '@/repository/local'
 
 export const metadata: Metadata = {
   title: 'All Products - E-Commerce Demo',
@@ -11,20 +9,19 @@ export const metadata: Metadata = {
 }
 
 export default async function ProductsPage() {
-  // Clean, domain-specific API call
-  const products = await local.product.getLatest()
+  const products = await local.product.getAll()
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">All Products</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {products.docs.map((product) => (
+        {products.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </div>
 
-      {products.docs.length === 0 && (
+      {products.length === 0 && (
         <p className="text-center text-gray-500 py-8">
           No products found. Make sure to run the seeder first.
         </p>
