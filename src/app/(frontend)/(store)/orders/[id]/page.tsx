@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { CheckCircle, Package, Truck } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/data-access/local'
+import { local } from '@/repository/local'
 
 interface OrderPageProps {
   params: Promise<{ id: string }>
@@ -27,7 +27,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
     redirect('/auth')
   }
 
-  const order = await local.order.findFirstOrFail({
+  const order = await local.order.getFirstOrFail({
     id: { equals: Number(id) },
     user: { equals: user.id },
   })

@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { Package, CheckCircle, Truck, Clock } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/data-access/local'
+import { local } from '@/repository/local'
 
 export const metadata: Metadata = {
   title: 'My Orders - E-Commerce Demo',
@@ -18,7 +18,7 @@ export default async function OrdersPage() {
     redirect('/auth')
   }
 
-  const orders = await local.order.findWhere({ user: { equals: user.id } })
+  const orders = await local.order.getAll({ user: { equals: user.id } })
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -54,7 +54,7 @@ export default async function OrdersPage() {
     }
   }
 
-  if (orders.docs.length === 0) {
+  if (orders.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Your Orders</h1>
@@ -81,7 +81,7 @@ export default async function OrdersPage() {
       <h1 className="text-3xl font-bold mb-8">Your Orders</h1>
 
       <div className="space-y-6">
-        {orders.docs.map((order) => (
+        {orders.map((order) => (
           <div key={order.id} className="bg-white border rounded-lg p-6">
             {/* Order Header */}
             <div className="flex items-center justify-between mb-4">
@@ -157,25 +157,25 @@ export default async function OrdersPage() {
         <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">{orders.docs.length}</div>
+            <div className="text-2xl font-bold text-blue-600">{orders.length}</div>
             <div className="text-sm text-gray-600">Total Orders</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">
-              {formatPrice(orders.docs.reduce((sum, order) => sum + order.total, 0))}
+              {formatPrice(orders.reduce((sum, order) => sum + order.total, 0))}
             </div>
             <div className="text-sm text-gray-600">Total Spent</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">
-              {orders.docs.filter((order) => order.status === 'delivered').length}
+              {orders.filter((order) => order.status === 'delivered').length}
             </div>
             <div className="text-sm text-gray-600">Delivered</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-yellow-600">
               {
-                orders.docs.filter((order) =>
+                orders.filter((order) =>
                   ['pending', 'processing', 'shipped'].includes(order.status),
                 ).length
               }

@@ -13,6 +13,14 @@ export abstract class BaseModel<T> {
 
     return doc
   }
+  async getFirstOrFail(where: Where = {}) {
+    const result = await this.getAll(where)
+    if (result.length === 0) {
+      notFound()
+    }
+
+    return result[0]
+  }
   async getBySlug(slug: string): Promise<T | null> {
     const payload = await getPayloadClient()
 
