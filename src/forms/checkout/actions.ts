@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { checkoutSchema, type CheckoutFormData } from './schema'
+import { ZodError } from 'zod'
 
 interface ActionResult {
   success: boolean
@@ -140,17 +141,17 @@ export async function processCheckoutAction(data: CheckoutFormData): Promise<Act
       message: 'Order placed successfully!',
       orderId: String(order.id),
     }
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors,
+        message: error.message,
       }
     }
 
     return {
       success: false,
-      message: error.message || 'Failed to process checkout. Please try again.',
+      message: 'Failed to process checkout. Please try again.',
     }
   }
 }

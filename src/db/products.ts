@@ -81,7 +81,7 @@ export async function seedProducts() {
       collection: 'products',
       data: {
         ...productWithoutCategoryName,
-        category: categories.find((c) => c.name === product.categoryName)!.id,
+        category: categories.find((c) => c.name === categoryName)!.id,
       },
     })
   }

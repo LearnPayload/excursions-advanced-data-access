@@ -33,17 +33,17 @@ export async function loginAction(data: LoginFormData): Promise<ActionResult> {
     } else {
       return { success: false, message: 'Invalid credentials' }
     }
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors,
+        message: error.message,
       }
     }
 
     return {
       success: false,
-      message: error.message || 'Login failed. Please try again.',
+      message: 'Login failed. Please try again.',
     }
   }
 }
@@ -78,25 +78,18 @@ export async function registerAction(data: RegisterFormData): Promise<ActionResu
     } else {
       return { success: false, message: 'Failed to create account' }
     }
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'ZodError') {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors,
+        message: error.message,
       }
     }
 
     // Handle duplicate email error
-    if (error.message?.includes('duplicate') || error.message?.includes('already exists')) {
-      return {
-        success: false,
-        message: 'An account with this email already exists',
-      }
-    }
-
     return {
       success: false,
-      message: error.message || 'Registration failed. Please try again.',
+      message: 'There was an error creating your account. Please check your email and try again.',
     }
   }
 }

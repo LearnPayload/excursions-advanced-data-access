@@ -74,7 +74,7 @@ export default async function OrdersPage() {
           <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-semibold mb-4">No orders yet</h2>
           <p className="text-gray-600 mb-6">
-            You haven't placed any orders yet. Start shopping to see your orders here.
+            You haven&apos;t placed any orders yet. Start shopping to see your orders here.
           </p>
           <Link
             href="/products"
@@ -115,7 +115,7 @@ export default async function OrdersPage() {
 
             {/* Order Items Preview */}
             <div className="space-y-3 mb-4">
-              {order.items.slice(0, 3).map((item: any, index: number) => {
+              {order.items.slice(0, 3).map((item, index: number) => {
                 const product = typeof item.product === 'object' ? item.product : null
 
                 if (!product) return null

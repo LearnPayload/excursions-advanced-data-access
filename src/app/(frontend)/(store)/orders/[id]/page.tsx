@@ -38,6 +38,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
       depth: 2, // Populate items.product and user
     })
   } catch (error) {
+    console.error('Error fetching order:', error)
     notFound()
   }
 
@@ -92,7 +93,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
         <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
         <p className="text-gray-600">
-          Thank you for your order. We'll send you updates as your order progresses.
+          Thank you for your order. We&apos;ll send you updates as your order progresses.
         </p>
       </div>
 
@@ -124,7 +125,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
           <h2 className="text-xl font-semibold mb-4">Order Items</h2>
 
           <div className="space-y-4">
-            {order.items.map((item: any, index: number) => {
+            {order.items.map((item, index: number) => {
               const product = typeof item.product === 'object' ? item.product : null
 
               if (!product) return null
@@ -166,11 +167,11 @@ export default async function OrderPage({ params }: OrderPageProps) {
           <div className="space-y-2 text-sm">
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <span>We'll prepare your items for shipping</span>
+              <span>We&apos;ll prepare your items for shipping</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <span>You'll receive a tracking number via email</span>
+              <span>You&apos;ll receive a tracking number via email</span>
             </div>
             <div className="flex items-center space-x-2">
               <div className="w-2 h-2 bg-blue-600 rounded-full"></div>

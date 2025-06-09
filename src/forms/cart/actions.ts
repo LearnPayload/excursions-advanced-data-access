@@ -3,7 +3,7 @@
 import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { addToCartSchema, type AddToCartFormData } from './schema'
-import { local } from '@/data-access/local'
+import { ZodError } from 'zod'
 
 interface ActionResult {
   success: boolean
@@ -26,7 +26,14 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
     const validatedData = addToCartSchema.parse(data)
 
     // Check if product exists and has sufficient inventory
-    const product = await local.product.find(validatedData.productId)
+
+    const payload = await getPayloadClient()
+
+    // Get the category details
+    const product = await payload.findByID({
+      collection: 'products',
+      id: validatedData.productId,
+    })
 
     if (!product) {
       return {
@@ -43,7 +50,17 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
     }
 
     // Check if item already exists in cart for this user
-    const existingCartItem = await local.cart.cartItemExists(user.id, validatedData.productId)
+
+    const result = await payload.find({
+      collection: 'cart-items',
+      where: {
+        user: { equals: user.id },
+        product: { equals: validatedData.productId },
+      },
+      limit: 1,
+    })
+
+    const existingCartItem = result.totalDocs > 0 ? result.docs[0] : null
 
     if (existingCartItem) {
       // Update existing cart item quantity
@@ -56,8 +73,12 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
         }
       }
 
-      await local.cart.update(existingCartItem.id, {
-        quantity: newQuantity,
+      await payload.update({
+        collection: 'cart-items',
+        id: existingCartItem.id,
+        data: {
+          quantity: newQuantity,
+        },
       })
 
       return {
@@ -65,10 +86,13 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
         message: `Updated cart: ${newQuantity} ${product.name}${newQuantity > 1 ? 's' : ''}`,
       }
     } else {
-      await local.cart.create({
-        user: user.id,
-        product: Number(validatedData.productId),
-        quantity: validatedData.quantity,
+      await payload.create({
+        collection: 'cart-items',
+        data: {
+          product: Number(validatedData.productId),
+          quantity: validatedData.quantity,
+          user: user.id,
+        },
       })
 
       return {
@@ -76,17 +100,17 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
         message: `Added ${validatedData.quantity} ${product.name}${validatedData.quantity > 1 ? 's' : ''} to cart`,
       }
     }
-  } catch (error: any) {
-    if (error.name === 'ZodError') {
+  } catch (error: unknown) {
+    if (error instanceof ZodError) {
       return {
         success: false,
-        fieldErrors: error.flatten().fieldErrors,
+        message: error.message,
       }
     }
 
     return {
       success: false,
-      message: error.message || 'Failed to add item to cart. Please try again.',
+      message: 'Failed to add item to cart. Please try again.',
     }
   }
 }
@@ -134,10 +158,11 @@ export async function removeFromCartAction(cartItemId: number): Promise<ActionRe
       success: true,
       message: 'Item removed from cart',
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
+    console.error('Error removing item from cart:', error)
     return {
       success: false,
-      message: error.message || 'Failed to remove item from cart. Please try again.',
+      message: 'Failed to remove item from cart. Please try again.',
     }
   }
 }

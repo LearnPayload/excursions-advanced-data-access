@@ -14,6 +14,7 @@ export async function getCurrentUser(): Promise<TypedUser | null> {
 
     return result.user || null
   } catch (error) {
+    console.error('Error fetching current user:', error)
     return null
   }
 }

@@ -1,5 +1,4 @@
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
 import { Product } from '@/payload-types'
 import { ProductCard } from '@/components/ProductCard'
 import { getPayloadClient } from '@/db/client'
@@ -38,6 +37,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       description: category.description || `Shop ${category.name} products in our demo store.`,
     }
   } catch (error) {
+    console.error('Error generating metadata for category:', error)
     return {
       title: 'Category Not Found - E-Commerce Demo',
       description: 'The category you are looking for could not be found.',

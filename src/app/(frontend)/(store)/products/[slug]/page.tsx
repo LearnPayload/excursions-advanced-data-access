@@ -1,10 +1,10 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { AddToCartForm } from '@/forms/cart/form'
+import { getPayloadClient } from '@/db/client'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>
@@ -14,14 +14,23 @@ export async function generateMetadata({ params }: ProductDetailPageProps): Prom
   const { slug } = await params
 
   // Clean API call for metadata generation
-  const product = await local.product.findBy('slug', slug)
+  const payload = await getPayloadClient()
 
-  if (!product) {
+  // Get the category details
+  const result = await payload.find({
+    collection: 'products',
+    where: { slug: { equals: slug } },
+    limit: 1,
+  })
+
+  if (!result.totalDocs) {
     return {
       title: 'Product Not Found - E-Commerce Demo',
       description: 'The product you are looking for could not be found.',
     }
   }
+
+  const product = result.docs[0]
 
   const categoryName =
     product.category && typeof product.category === 'object' ? product.category.name : ''
@@ -39,11 +48,20 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const user = await getCurrentUser()
 
   // Clean, domain-specific API call
-  const product = await local.product.findBy('slug', slug)
+  const payload = await getPayloadClient()
 
-  if (!product) {
+  // Get the category details
+  const result = await payload.find({
+    collection: 'products',
+    where: { slug: { equals: slug } },
+    limit: 1,
+  })
+
+  if (!result.totalDocs) {
     notFound()
   }
+
+  const product = result.docs[0]
 
   return (
     <div className="container mx-auto px-4 py-8">

@@ -12,9 +12,7 @@ export default function AuthPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-md mx-auto">
         <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-center mb-8">
-            Welcome
-          </h1>
+          <h1 className="text-3xl font-bold text-center mb-8">Welcome</h1>
 
           {/* Tab Navigation */}
           <div className="flex mb-6 border-b">
@@ -49,7 +47,7 @@ export default function AuthPage() {
                 <h2 className="text-xl font-semibold mb-4">Sign in to your account</h2>
                 <LoginForm />
                 <p className="mt-4 text-sm text-gray-600 text-center">
-                  Don't have an account?{' '}
+                  Don&apos;t have an account?{' '}
                   <button
                     type="button"
                     onClick={() => setActiveTab('register')}
