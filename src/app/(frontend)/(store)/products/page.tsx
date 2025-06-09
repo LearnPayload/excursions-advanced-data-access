@@ -1,8 +1,6 @@
-import Link from 'next/link'
 import { Metadata } from 'next'
-import { local } from '@/data-access/local'
-import { formatPrice } from '@/lib/utils'
 import { ProductCard } from '@/components/ProductCard'
+import { getPayloadClient } from '@/db/client'
 
 export const metadata: Metadata = {
   title: 'All Products - E-Commerce Demo',
@@ -11,8 +9,13 @@ export const metadata: Metadata = {
 }
 
 export default async function ProductsPage() {
-  // Clean, domain-specific API call
-  const products = await local.product.getLatest()
+  const payload = await getPayloadClient()
+
+  const products = await payload.find({
+    collection: 'products',
+    limit: 100, // Adjust limit as needed
+    sort: 'name', // Sort by newest first
+  })
 
   return (
     <div className="container mx-auto px-4 py-8">
