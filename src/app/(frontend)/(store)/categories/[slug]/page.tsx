@@ -1,7 +1,7 @@
 import { Metadata } from 'next'
 import { Product } from '@/payload-types'
 import { ProductCard } from '@/components/ProductCard'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 interface CategoryPageProps {
   params: {

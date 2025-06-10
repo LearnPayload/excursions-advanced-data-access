@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { ProductCard } from '@/components/ProductCard'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 export const metadata: Metadata = {
   title: 'All Products - E-Commerce Demo',

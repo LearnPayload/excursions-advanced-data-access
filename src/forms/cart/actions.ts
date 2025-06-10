@@ -2,7 +2,7 @@
 
 import { getCurrentUser } from '@/lib/auth'
 import { addToCartSchema, type AddToCartFormData } from './schema'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 interface ActionResult {
   success: boolean

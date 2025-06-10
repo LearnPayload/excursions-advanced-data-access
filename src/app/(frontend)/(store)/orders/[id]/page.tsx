@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { CheckCircle, Package, Truck } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 interface OrderPageProps {
   params: Promise<{ id: string }>

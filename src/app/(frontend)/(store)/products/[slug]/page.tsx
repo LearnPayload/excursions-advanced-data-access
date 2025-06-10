@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { AddToCartForm } from '@/forms/cart/form'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 interface ProductDetailPageProps {
   params: Promise<{ slug: string }>

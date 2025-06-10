@@ -4,7 +4,7 @@ import { Metadata } from 'next'
 import { Package, CheckCircle, Truck, Clock } from 'lucide-react'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
-import { local } from '@/repository/local'
+import { local } from '@/repository'
 
 export const metadata: Metadata = {
   title: 'My Orders - E-Commerce Demo',
