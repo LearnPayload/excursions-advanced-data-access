@@ -3,7 +3,7 @@ import { Metadata } from 'next'
 import { requireAuth } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { RemoveFromCartButton } from '@/components/RemoveFromCartButton'
-import { local } from '@/data-access/local'
+import { local } from '@/repository'
 
 export const metadata: Metadata = {
   title: 'Shopping Cart - E-Commerce Demo',
@@ -15,7 +15,7 @@ export default async function CartPage() {
 
   const cart = await local.cart.getCartByUser(user.id)
 
-  if (cart.items.length === 0) {
+  if (!cart || cart.items.length === 0) {
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-8">Your Cart</h1>
@@ -51,7 +51,7 @@ export default async function CartPage() {
               if (!product) return null
 
               return (
-                <div key={item.id} className="border rounded-lg p-6 bg-white">
+                <div key={`item-${item.product.id}`} className="border rounded-lg p-6 bg-white">
                   <div className="flex items-center space-x-4">
                     {/* Product Info */}
                     <div className="flex-1">
@@ -78,7 +78,7 @@ export default async function CartPage() {
                     </div>
 
                     {/* Remove Button */}
-                    <RemoveFromCartButton cartItemId={Number(item.id)} />
+                    <RemoveFromCartButton cartItemId={item.id} />
                   </div>
                 </div>
               )

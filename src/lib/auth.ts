@@ -13,7 +13,8 @@ export async function getCurrentUser(): Promise<TypedUser | null> {
     })
 
     return result.user || null
-  } catch (error) {
+  } catch (error: unknown) {
+    console.error(error)
     return null
   }
 }

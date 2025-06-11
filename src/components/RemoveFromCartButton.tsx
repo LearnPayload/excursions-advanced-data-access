@@ -6,7 +6,7 @@ import { Trash2 } from 'lucide-react'
 import { removeFromCartAction } from '@/forms/cart/actions'
 
 interface RemoveFromCartButtonProps {
-  cartItemId: number
+  cartItemId: string
 }
 
 export function RemoveFromCartButton({ cartItemId }: RemoveFromCartButtonProps) {

@@ -13,14 +13,23 @@ export abstract class BaseModel<T> {
 
     return doc
   }
+
   async getFirstOrFail(where: Where = {}) {
-    const result = await this.getAll(where)
-    if (result.length === 0) {
+    const result = await this.getFirst(where)
+    if (!result) {
       notFound()
     }
 
+    return result
+  }
+  async getFirst(where: Where = {}): Promise<T | null> {
+    const result = await this.getAll(where)
+    if (result.length === 0) {
+      return null
+    }
     return result[0]
   }
+
   async getBySlug(slug: string): Promise<T | null> {
     const payload = await getPayloadClient()
 
@@ -42,15 +51,19 @@ export abstract class BaseModel<T> {
 
     return result.docs ?? []
   }
-  async getByID(id: number | string) {
+  async getByID(id: number | string): Promise<T | null> {
     const payload = await getPayloadClient()
 
-    const result = (await payload.findByID({
+    const result = (await payload.find({
       collection: this.collection,
-      id,
-    })) as T
+      where: { id: { equals: id } },
+    })) as PaginatedDocs<T>
 
-    return result
+    if (result.totalDocs === 0) {
+      return null
+    }
+
+    return result.docs[0]
   }
 
   async create(data: Omit<Partial<T>, 'id' | 'createdAt' | 'updatedAt'>) {

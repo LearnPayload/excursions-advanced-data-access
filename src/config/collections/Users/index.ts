@@ -15,8 +15,9 @@ export const Users: CollectionConfig = {
     {
       name: 'cart',
       type: 'join',
-      collection: 'cart-items',
+      collection: 'cart',
       on: 'user',
+      hasMany: false,
     },
   ],
 }

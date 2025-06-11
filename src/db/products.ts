@@ -75,12 +75,10 @@ export async function seedProducts() {
   const categories = (await payload.find({ collection: 'categories' })).docs
 
   for (const product of productData) {
-    const { categoryName, ...productWithoutCategoryName } = product
-
     await payload.create({
       collection: 'products',
       data: {
-        ...productWithoutCategoryName,
+        ...product,
         category: categories.find((c) => c.name === product.categoryName)!.id,
       },
     })

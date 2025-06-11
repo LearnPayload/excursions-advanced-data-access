@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import { Metadata } from 'next'
-import { getPayloadClient } from '@/db/client'
 import { getCurrentUser } from '@/lib/auth'
 import { formatPrice } from '@/lib/utils'
 import { CheckoutForm } from '@/forms/checkout/form'
+import { local } from '@/repository'
 
 export const metadata: Metadata = {
   title: 'Checkout - E-Commerce Demo',
@@ -12,31 +12,21 @@ export const metadata: Metadata = {
 
 export default async function CheckoutPage() {
   const user = await getCurrentUser()
-  
+
   if (!user) {
     redirect('/auth')
   }
 
-  const payload = await getPayloadClient()
+  const cart = await local.cart.getCartByUser(user.id)
 
-  // Get user's cart items
-  const cartItems = await payload.find({
-    collection: 'cart-items',
-    where: {
-      user: { equals: user.id },
-    },
-    depth: 2, // Populate product and category relationships
-    sort: '-createdAt',
-  })
-
-  if (cartItems.docs.length === 0) {
+  if (!cart || cart.items.length === 0) {
     redirect('/cart')
   }
 
   // Calculate totals
-  const subtotal = cartItems.docs.reduce((sum, item) => {
+  const subtotal = cart.items.reduce((sum, item) => {
     if (typeof item.product === 'object' && item.product.price) {
-      return sum + (item.product.price * item.quantity)
+      return sum + item.product.price * item.quantity
     }
     return sum
   }, 0)
@@ -62,9 +52,9 @@ export default async function CheckoutPage() {
 
             {/* Items */}
             <div className="space-y-4 mb-6">
-              {cartItems.docs.map((item) => {
+              {cart.items.map((item) => {
                 const product = typeof item.product === 'object' ? item.product : null
-                
+
                 if (!product) return null
 
                 return (
@@ -74,12 +64,8 @@ export default async function CheckoutPage() {
                       <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">
-                        {formatPrice(product.price * item.quantity)}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {formatPrice(product.price)} each
-                      </p>
+                      <p className="font-medium">{formatPrice(product.price * item.quantity)}</p>
+                      <p className="text-sm text-gray-600">{formatPrice(product.price)} each</p>
                     </div>
                   </div>
                 )

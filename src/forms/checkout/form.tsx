@@ -4,19 +4,17 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { CreditCard, Shield } from 'lucide-react'
 import { processCheckoutAction } from './actions'
-import { checkoutSchema, type CheckoutFormData } from './schema'
+import { type CheckoutFormData } from './schema'
+import { User } from '@/payload-types'
+import { ZodFormattedError } from 'zod'
 
 interface CheckoutFormProps {
-  user: {
-    id: string
-    name: string
-    email: string
-  }
+  user: User
 }
 
 interface FormState {
   message?: string
-  fieldErrors?: Record<string, string[]>
+  fieldErrors?: ZodFormattedError<CheckoutFormData>
   success?: boolean
 }
 
@@ -73,7 +71,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {state.fieldErrors?.firstName && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.firstName[0]}</p>
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.firstName?._errors[0]}</p>
             )}
           </div>
 
@@ -90,7 +88,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {state.fieldErrors?.lastName && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.lastName[0]}</p>
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.lastName._errors[0]}</p>
             )}
           </div>
         </div>
@@ -108,7 +106,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {state.fieldErrors?.email && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.email[0]}</p>
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.email._errors[0]}</p>
           )}
         </div>
 
@@ -126,7 +124,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {state.fieldErrors?.address && (
-            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.address[0]}</p>
+            <p className="mt-1 text-sm text-red-600">{state.fieldErrors.address._errors[0]}</p>
           )}
         </div>
 
@@ -144,7 +142,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {state.fieldErrors?.city && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.city[0]}</p>
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.city._errors[0]}</p>
             )}
           </div>
 
@@ -162,7 +160,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {state.fieldErrors?.state && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.state[0]}</p>
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.state._errors[0]}</p>
             )}
           </div>
 
@@ -180,7 +178,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             {state.fieldErrors?.zipCode && (
-              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.zipCode[0]}</p>
+              <p className="mt-1 text-sm text-red-600">{state.fieldErrors.zipCode._errors[0]}</p>
             )}
           </div>
         </div>
@@ -244,7 +242,7 @@ export function CheckoutForm({ user }: CheckoutFormProps) {
           </label>
         </div>
         {state.fieldErrors?.agreeToTerms && (
-          <p className="mb-4 text-sm text-red-600">{state.fieldErrors.agreeToTerms[0]}</p>
+          <p className="mb-4 text-sm text-red-600">{state.fieldErrors.agreeToTerms._errors[0]}</p>
         )}
 
         {state.message && !state.success && (

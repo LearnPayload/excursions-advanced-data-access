@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: CategoryPageProps): Promise<M
       description: category.description || `Shop ${category.name} products in our demo store.`,
     }
   } catch (error) {
+    console.error(error)
     return {
       title: 'Category Not Found - E-Commerce Demo',
       description: 'The category you are looking for could not be found.',

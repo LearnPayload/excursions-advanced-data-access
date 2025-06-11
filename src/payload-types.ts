@@ -71,14 +71,14 @@ export interface Config {
     products: Product;
     categories: Category;
     orders: Order;
-    'cart-items': CartItem;
+    cart: Cart;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
     'payload-migrations': PayloadMigration;
   };
   collectionsJoins: {
     users: {
-      cart: 'cart-items';
+      cart: 'cart';
     };
     categories: {
       products: 'products';
@@ -89,7 +89,7 @@ export interface Config {
     products: ProductsSelect<false> | ProductsSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     orders: OrdersSelect<false> | OrdersSelect<true>;
-    'cart-items': CartItemsSelect<false> | CartItemsSelect<true>;
+    cart: CartSelect<false> | CartSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
     'payload-migrations': PayloadMigrationsSelect<false> | PayloadMigrationsSelect<true>;
@@ -134,7 +134,7 @@ export interface User {
   id: number;
   name: string;
   cart?: {
-    docs?: (number | CartItem)[];
+    docs?: (number | Cart)[];
     hasNextPage?: boolean;
     totalDocs?: number;
   };
@@ -151,13 +151,18 @@ export interface User {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cart-items".
+ * via the `definition` "cart".
  */
-export interface CartItem {
+export interface Cart {
   id: number;
   user: number | User;
-  product: number | Product;
-  quantity: number;
+  products?:
+    | {
+        product: number | Product;
+        quantity: number;
+        id?: string | null;
+      }[]
+    | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -235,8 +240,8 @@ export interface PayloadLockedDocument {
         value: number | Order;
       } | null)
     | ({
-        relationTo: 'cart-items';
-        value: number | CartItem;
+        relationTo: 'cart';
+        value: number | Cart;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -344,12 +349,17 @@ export interface OrdersSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "cart-items_select".
+ * via the `definition` "cart_select".
  */
-export interface CartItemsSelect<T extends boolean = true> {
+export interface CartSelect<T extends boolean = true> {
   user?: T;
-  product?: T;
-  quantity?: T;
+  products?:
+    | T
+    | {
+        product?: T;
+        quantity?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

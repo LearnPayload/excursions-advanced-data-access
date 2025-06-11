@@ -21,67 +21,73 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
       }
     }
 
-    // Validate input
-    const validatedData = addToCartSchema.parse(data)
-
-    // Check if product exists and has sufficient inventory
-
-    // Get the category details
-    const product = await local.product.getByID(validatedData.productId)
+    const { productId, quantity } = addToCartSchema.parse(data)
+    const product = await local.product.getByID(productId)
 
     if (!product) {
       return {
         success: false,
-        message: 'Product not found',
+        message: `Product does not exist`,
       }
     }
 
-    if (product.inventory < validatedData.quantity) {
-      return {
-        success: false,
-        message: `Only ${product.inventory} items available in stock`,
-      }
+    const getAcceptedQuantity = (inv: number, qty: number) => {
+      return inv >= qty ? qty : inv
     }
 
-    // Check if item already exists in cart for this user
+    // create a cart for user if one does not exist
+    const cart = await local.cart.getCartByUser(user.id)
 
-    const items = await local.cart.getAll({
-      user: { equals: user.id },
-      product: { equals: validatedData.productId },
-    })
-
-    const existingCartItem = items.length > 0 ? items[0] : null
-
-    if (existingCartItem) {
-      // Update existing cart item quantity
-      const newQuantity = existingCartItem.quantity + validatedData.quantity
-
-      if (newQuantity > product.inventory) {
-        return {
-          success: false,
-          message: `Cannot add ${validatedData.quantity} more. Only ${product.inventory - existingCartItem.quantity} more available`,
-        }
-      }
-
-      await local.cart.update(existingCartItem.id, {
-        quantity: newQuantity,
-      })
-
-      return {
-        success: true,
-        message: `Updated cart: ${newQuantity} ${product.name}${newQuantity > 1 ? 's' : ''}`,
-      }
-    } else {
+    if (!cart) {
       await local.cart.create({
-        product: Number(validatedData.productId),
-        quantity: validatedData.quantity,
         user: user.id,
+        products: [
+          { product: productId, quantity: getAcceptedQuantity(product.inventory, quantity) },
+        ],
       })
 
       return {
         success: true,
-        message: `Added ${validatedData.quantity} ${product.name}${validatedData.quantity > 1 ? 's' : ''} to cart`,
+        message: `Updated cart: ${product.name}`,
       }
+    }
+
+    /**
+     * 1. We have a cart
+     * 2. Is the product already in the cart?
+     *  a. If YES, increase the quantity (limited by inventory)
+     *  b. If NO, add the product to the cart.
+     */
+
+    // add product if it has not yet been added
+    const productExists = cart.items.find((item) => item.product.id === productId)
+    const products = cart.items.map((item) => ({ product: item.product, quantity: item.quantity }))
+
+    if (productExists) {
+      await local.cart.update(cart.id, {
+        products: products.map((item) => {
+          const updatedQuantity =
+            item.product.id === product.id ? item.quantity + quantity : item.quantity
+          return {
+            product: item.product,
+            quantity: getAcceptedQuantity(product.inventory, updatedQuantity),
+          }
+        }),
+      })
+    } else {
+      await local.cart.update(cart.id, {
+        products: products.concat([
+          {
+            product: product,
+            quantity,
+          },
+        ]),
+      })
+    }
+
+    return {
+      success: true,
+      message: `Updated cart: ${product.name}`,
     }
   } catch (error: any) {
     if (error.name === 'ZodError') {
@@ -98,7 +104,7 @@ export async function addToCartAction(data: AddToCartFormData): Promise<ActionRe
   }
 }
 
-export async function removeFromCartAction(cartItemId: number): Promise<ActionResult> {
+export async function removeFromCartAction(cartItemId: string): Promise<ActionResult> {
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -109,7 +115,14 @@ export async function removeFromCartAction(cartItemId: number): Promise<ActionRe
     }
 
     // Verify the cart item belongs to the current user
-    const cartItem = await local.cart.getByID(cartItemId)
+    const cart = await local.cart.getCartByUser(user.id)
+    if (!cart) {
+      return {
+        success: false,
+        message: 'Cart item not found',
+      }
+    }
+    const cartItem = cart.items.find((item) => item.id === cartItemId)
 
     if (!cartItem) {
       return {
@@ -118,16 +131,11 @@ export async function removeFromCartAction(cartItemId: number): Promise<ActionRe
       }
     }
 
-    // Check if the cart item belongs to the current user
-    const userId = typeof cartItem.user === 'object' ? cartItem.user.id : cartItem.user
-    if (userId !== user.id) {
-      return {
-        success: false,
-        message: 'Cart item not found',
-      }
-    }
+    const filteredItems = cart.items.filter((item) => item.id !== cartItemId)
 
-    await local.cart.delete(cartItemId)
+    await local.cart.update(cart.id, {
+      products: filteredItems,
+    })
 
     return {
       success: true,

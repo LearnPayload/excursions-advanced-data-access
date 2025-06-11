@@ -79,7 +79,7 @@ export default async function OrderPage({ params }: OrderPageProps) {
         <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Order Confirmed!</h1>
         <p className="text-gray-600">
-          Thank you for your order. We'll send you updates as your order progresses.
+          Thank you for your order. We&apos;ll send you updates as your order progresses.
         </p>
       </div>
 

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { Minus, Plus, ShoppingCart } from 'lucide-react'
 import { addToCartAction } from './actions'
-import { addToCartSchema, type AddToCartFormData } from './schema'
+import { type AddToCartFormData } from './schema'
 import { Product } from '@/payload-types'
 
 interface AddToCartFormProps {
@@ -41,7 +41,7 @@ export function AddToCartForm({ productId, maxQuantity, isAuthenticated }: AddTo
     setQuantity(clampedValue)
   }
 
-  async function handleSubmit(formData: FormData) {
+  async function handleSubmit() {
     if (!isAuthenticated) {
       setState({
         success: false,
